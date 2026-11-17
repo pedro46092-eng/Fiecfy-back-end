@@ -2,43 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreAlbumRequest;
+use App\Http\Resources\AlbumResource;
 use App\Models\Album;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
-class AlbumController
+class AlbumController extends Controller
 {
-    // Exercício 3: Retorna todos os álbuns
-    public function index()
+    public function index(Request $request)
     {
-        return response()->json(Album::all(), 200);
+        $query = Album::with(['artist', 'songs']);
+
+        if ($request->filled('search')) {
+            $query->where('title', 'like', '%' . $request->search . '%');
+        }
+
+        return AlbumResource::collection($query->paginate(15));
     }
 
-    // Método de Criação
-    public function store(Request $request)
+    public function store(StoreAlbumRequest $request)
     {
-        $album = Album::create($request->all());
+        $data = $request->validated();
 
-        return response()->json($album, 201);
+        if ($request->hasFile('cover')) {
+            $path = $request->file('cover')->store('covers/albums', 'public');
+            $data['cover_url'] = Storage::url($path);
+        }
+
+        $album = Album::create($data);
+
+        return (new AlbumResource($album->load('artist')))
+            ->additional(['message' => 'Álbum criado com sucesso!'])
+            ->response()
+            ->setStatusCode(201);
     }
 
-    // Exercício 3: Busca o álbum pelo ID trazendo as músicas associadas (Eager Loading)
     public function show($id)
     {
-        $album = Album::with('songs')->findOrFail($id);
+        $album = Album::with(['artist', 'songs'])->findOrFail($id);
 
-        return response()->json($album, 200);
+        return new AlbumResource($album);
     }
 
-    // Exercício 4: Atualiza um álbum
-    public function update(Request $request, $id)
+    public function update(StoreAlbumRequest $request, $id)
     {
         $album = Album::findOrFail($id);
-        $album->update($request->all());
+        $data = $request->validated();
 
-        return response()->json($album, 200);
+        if ($request->hasFile('cover')) {
+            $path = $request->file('cover')->store('covers/albums', 'public');
+            $data['cover_url'] = Storage::url($path);
+        }
+
+        $album->update($data);
+
+        return (new AlbumResource($album->load('artist')))
+            ->additional(['message' => 'Álbum atualizado com sucesso!']);
     }
 
-    // Exercício 5: Deleta um álbum
     public function destroy($id)
     {
         $album = Album::findOrFail($id);

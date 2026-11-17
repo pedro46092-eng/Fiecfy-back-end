@@ -1,4 +1,4 @@
- <?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-       
         Schema::create('songs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('album_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('album_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->integer('duration_seconds');
-            $table->boolean('is_explicit')->default(false);
+            $table->integer('duration');
+            $table->string('audio_url')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

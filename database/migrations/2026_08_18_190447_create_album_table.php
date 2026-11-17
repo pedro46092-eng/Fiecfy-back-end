@@ -1,4 +1,4 @@
- <?php
+<?php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -15,9 +15,10 @@ return new class extends Migration
             $table->id();
             $table->foreignId('artist_id')->constrained()->cascadeOnDelete();
             $table->string('title');
-            $table->integer('release_year');
-            $table->string('cover_image')->nullable();
+            $table->integer('year');
+            $table->string('cover_url')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
